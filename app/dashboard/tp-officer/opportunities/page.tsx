@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Briefcase, Plus, Eye, Edit, Trash2, MapPin, Calendar, Building, Users } from "lucide-react"
 import { useState, useEffect } from "react"
-import { getActiveOpportunities, createOpportunity, getAllCompanies } from "@/lib/data"
+import { getAllOpportunities, createOpportunity, getAllCompanies } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 
 export default function TPOfficerOpportunities() {
@@ -32,7 +32,7 @@ export default function TPOfficerOpportunities() {
 
   useEffect(() => {
     const loadData = () => {
-      const opportunitiesData = getActiveOpportunities()
+      const opportunitiesData = getAllOpportunities()
       const companiesData = getAllCompanies()
       setOpportunities(opportunitiesData)
       setCompanies(companiesData.filter((company) => company.verified))

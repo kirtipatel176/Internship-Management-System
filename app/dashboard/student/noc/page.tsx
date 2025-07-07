@@ -11,37 +11,34 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, FileText, CheckCircle, Clock, XCircle, Download, Eye, Building } from "lucide-react"
+import { Plus, FileText, CheckCircle, Clock, XCircle, Eye, Download } from "lucide-react"
 import { useState, useEffect } from "react"
-import { getNOCRequestsByStudent, createNOCRequest, getCurrentUser, getAllCompanies } from "@/lib/data"
+import { getNOCRequestsByStudent, createNOCRequest, getCurrentUser } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 
-export default function StudentNOC() {
-  const [showApplicationForm, setShowApplicationForm] = useState(false)
+export default function NOCRequests() {
+  const [showForm, setShowForm] = useState(false)
   const [nocRequests, setNocRequests] = useState([])
-  const [companies, setCompanies] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
-    const loadData = () => {
+    const loadNOCRequests = () => {
       const user = getCurrentUser()
       if (user) {
-        const userNOCs = getNOCRequestsByStudent(user.id)
-        setNocRequests(userNOCs)
+        const requests = getNOCRequestsByStudent(user.id)
+        setNocRequests(requests)
       }
-      const allCompanies = getAllCompanies()
-      setCompanies(allCompanies.filter((company) => company.status === "verified"))
     }
 
-    loadData()
+    loadNOCRequests()
   }, [])
 
-  const handleSubmitNOC = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setIsSubmitting(true)
 
-    const formData = new FormData(event.target as HTMLFormElement)
+    const formData = new FormData(e.target as HTMLFormElement)
     const user = getCurrentUser()
 
     if (!user) {
@@ -58,27 +55,29 @@ export default function StudentNOC() {
       const newNOC = createNOCRequest({
         studentId: user.id,
         studentName: user.name,
-        companyName: formData.get("company") as string,
+        studentEmail: user.email,
+        company: formData.get("company") as string,
         position: formData.get("position") as string,
         duration: formData.get("duration") as string,
-        startDate: formData.get("start-date") as string,
-        endDate: formData.get("end-date") as string,
+        startDate: formData.get("startDate") as string,
+        description: formData.get("description") as string,
+        documents: ["offer_letter.pdf"],
       })
 
       setNocRequests((prev) => [...prev, newNOC])
-      setShowApplicationForm(false)
+      setShowForm(false)
 
       toast({
-        title: "NOC Application Submitted",
-        description: "Your NOC application has been submitted successfully and is pending approval.",
+        title: "NOC Request Submitted",
+        description: "Your NOC request has been submitted successfully and is pending review.",
       })
 
       // Reset form
-      ;(event.target as HTMLFormElement).reset()
+      ;(e.target as HTMLFormElement).reset()
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to submit NOC application. Please try again.",
+        description: "Failed to submit NOC request. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -86,113 +85,90 @@ export default function StudentNOC() {
     }
   }
 
-  const handleViewNOC = (nocId: string) => {
+  const handleViewDetails = (id: number) => {
     toast({
-      title: "View NOC",
-      description: `Opening NOC application ${nocId}`,
+      title: "View Details",
+      description: `Viewing details for NOC request ${id}`,
     })
   }
 
-  const handleDownloadNOC = (nocId: string) => {
+  const handleDownloadNOC = (id: number) => {
     toast({
       title: "Download NOC",
-      description: `Downloading NOC application ${nocId}`,
+      description: `Downloading NOC certificate for request ${id}`,
     })
   }
 
   return (
     <AuthGuard allowedRoles={["student"]}>
       <DashboardLayout>
-        <div className="space-y-6 p-4 sm:p-6">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">NOC Applications</h1>
-              <p className="text-gray-600">Apply for No Objection Certificate for internships</p>
+              <h1 className="text-3xl font-bold text-gray-900">NOC Requests</h1>
+              <p className="text-gray-600">Manage your No Objection Certificate requests</p>
             </div>
-            <Button onClick={() => setShowApplicationForm(!showApplicationForm)} className="w-full sm:w-auto">
+            <Button onClick={() => setShowForm(!showForm)}>
               <Plus className="mr-2 h-4 w-4" />
-              Apply for NOC
+              New NOC Request
             </Button>
           </div>
 
-          {showApplicationForm && (
+          {showForm && (
             <Card>
               <CardHeader>
-                <CardTitle>NOC Application Form</CardTitle>
-                <CardDescription>Submit your internship details for NOC approval</CardDescription>
+                <CardTitle>Submit New NOC Request</CardTitle>
+                <CardDescription>Request NOC for externally secured internship</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmitNOC} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company *</Label>
-                    <Select name="company" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a verified company" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {companies.map((company) => (
-                          <SelectItem key={company.id} value={company.name}>
-                            {company.name} - {company.location}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Position/Role *</Label>
-                    <Input id="position" name="position" placeholder="Enter internship position" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="duration">Duration *</Label>
-                    <Select name="duration" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1 month">1 month</SelectItem>
-                        <SelectItem value="2 months">2 months</SelectItem>
-                        <SelectItem value="3 months">3 months</SelectItem>
-                        <SelectItem value="4 months">4 months</SelectItem>
-                        <SelectItem value="6 months">6 months</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="start-date">Start Date *</Label>
-                      <Input id="start-date" type="date" name="start-date" required />
+                      <Label htmlFor="company">Company Name *</Label>
+                      <Input id="company" name="company" placeholder="Enter company name" required />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="end-date">End Date *</Label>
-                      <Input id="end-date" type="date" name="end-date" required />
+                      <Label htmlFor="position">Position *</Label>
+                      <Input id="position" name="position" placeholder="Internship position" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="duration">Duration *</Label>
+                      <Select name="duration" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select duration" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2 months">2 months</SelectItem>
+                          <SelectItem value="3 months">3 months</SelectItem>
+                          <SelectItem value="4 months">4 months</SelectItem>
+                          <SelectItem value="6 months">6 months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate">Start Date *</Label>
+                      <Input id="startDate" type="date" name="startDate" required />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Label htmlFor="description">Job Description *</Label>
                     <Textarea
                       id="description"
                       name="description"
-                      placeholder="Brief description of the internship role and responsibilities"
-                      rows={3}
+                      placeholder="Describe the internship role and responsibilities"
+                      rows={4}
+                      required
                     />
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                      {isSubmitting ? (
-                        "Submitting..."
-                      ) : (
-                        <>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Submit NOC Application
-                        </>
-                      )}
+                  <div className="space-y-2">
+                    <Label htmlFor="offer-letter">Offer Letter (PDF) *</Label>
+                    <Input id="offer-letter" type="file" accept=".pdf" name="offer-letter" required />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Submitting..." : "Submit Request"}
                     </Button>
-                    <Button
-                      variant="outline"
-                      type="button"
-                      onClick={() => setShowApplicationForm(false)}
-                      className="w-full sm:w-auto"
-                    >
+                    <Button variant="outline" type="button" onClick={() => setShowForm(false)}>
                       Cancel
                     </Button>
                   </div>
@@ -202,65 +178,55 @@ export default function StudentNOC() {
           )}
 
           <div className="space-y-4">
-            {nocRequests.map((noc) => (
-              <Card key={noc.id}>
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+            {nocRequests.map((request) => (
+              <Card key={request.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0 mb-2">
-                        <h3 className="text-lg font-semibold">{noc.position}</h3>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold">{request.company}</h3>
                         <Badge
                           variant={
-                            noc.status === "approved"
+                            request.status === "approved"
                               ? "default"
-                              : noc.status === "pending"
+                              : request.status === "pending"
                                 ? "secondary"
                                 : "destructive"
                           }
-                          className="flex items-center gap-1 w-fit"
+                          className="flex items-center gap-1"
                         >
-                          {noc.status === "approved" && <CheckCircle className="h-3 w-3" />}
-                          {noc.status === "pending" && <Clock className="h-3 w-3" />}
-                          {noc.status === "rejected" && <XCircle className="h-3 w-3" />}
-                          {noc.status.charAt(0).toUpperCase() + noc.status.slice(1)}
+                          {request.status === "approved" && <CheckCircle className="h-3 w-3" />}
+                          {request.status === "pending" && <Clock className="h-3 w-3" />}
+                          {request.status === "rejected" && <XCircle className="h-3 w-3" />}
+                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                         </Badge>
                       </div>
-                      <p className="text-gray-600 mb-2">{noc.companyName}</p>
-                      <div className="flex flex-col space-y-1 sm:flex-row sm:gap-4 sm:space-y-0 text-sm text-gray-500 mb-3">
-                        <span>Duration: {noc.duration}</span>
-                        <span>
-                          Period: {new Date(noc.startDate).toLocaleDateString()} -{" "}
-                          {new Date(noc.endDate).toLocaleDateString()}
-                        </span>
-                        <span>Submitted: {new Date(noc.submittedDate).toLocaleDateString()}</span>
+                      <p className="text-gray-600 mb-2">{request.position}</p>
+                      <p className="text-sm text-gray-700 mb-3">{request.description}</p>
+                      <div className="flex gap-4 text-sm text-gray-500">
+                        <span>Duration: {request.duration}</span>
+                        <span>Start Date: {new Date(request.startDate).toLocaleDateString()}</span>
+                        <span>Submitted: {new Date(request.submittedDate).toLocaleDateString()}</span>
+                        {request.approvedDate && (
+                          <span>Approved: {new Date(request.approvedDate).toLocaleDateString()}</span>
+                        )}
                       </div>
-                      {noc.reviewedBy && <p className="text-sm text-gray-600 mb-3">Reviewed by: {noc.reviewedBy}</p>}
-                      {noc.comments && (
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm font-medium mb-1">T&P Officer Comments:</p>
-                          <p className="text-sm text-gray-700">{noc.comments}</p>
+                      {request.feedback && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-sm font-medium mb-1">Review Feedback:</p>
+                          <p className="text-sm text-gray-700">{request.feedback}</p>
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-row sm:flex-col gap-2 sm:ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewNOC(noc.id)}
-                        className="flex-1 sm:flex-none"
-                      >
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleViewDetails(request.id)}>
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        View Details
                       </Button>
-                      {noc.status === "approved" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadNOC(noc.id)}
-                          className="flex-1 sm:flex-none"
-                        >
+                      {request.status === "approved" && (
+                        <Button variant="outline" size="sm" onClick={() => handleDownloadNOC(request.id)}>
                           <Download className="h-4 w-4 mr-1" />
-                          Download
+                          Download NOC
                         </Button>
                       )}
                     </div>
@@ -273,9 +239,9 @@ export default function StudentNOC() {
           {nocRequests.length === 0 && (
             <Card>
               <CardContent className="p-8 text-center">
-                <Building className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500 mb-2">No NOC applications yet</p>
-                <p className="text-sm text-gray-400">Apply for a No Objection Certificate to start your internship</p>
+                <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-500 mb-2">No NOC requests found</p>
+                <p className="text-sm text-gray-400">Click "New NOC Request" to submit your first request</p>
               </CardContent>
             </Card>
           )}

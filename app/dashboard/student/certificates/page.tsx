@@ -54,9 +54,13 @@ export default function StudentCertificates() {
       const newCertificate = createCertificate({
         studentId: user.id,
         studentName: user.name,
-        certificateType: "Internship Completion",
-        issuer: formData.get("company-name") as string,
-        issueDate: formData.get("end-date") as string,
+        studentEmail: user.email,
+        internshipTitle: formData.get("internship-title") as string,
+        company: formData.get("company-name") as string,
+        duration: "6 months", // Calculate from dates
+        startDate: formData.get("start-date") as string,
+        endDate: formData.get("end-date") as string,
+        fileName: `certificate_${user.name.toLowerCase().replace(" ", "_")}_${Date.now()}.pdf`,
       })
 
       setCertificates((prev) => [...prev, newCertificate])
@@ -80,14 +84,14 @@ export default function StudentCertificates() {
     }
   }
 
-  const handleViewCertificate = (certificateId: string) => {
+  const handleViewCertificate = (certificateId: number) => {
     toast({
       title: "View Certificate",
       description: `Opening certificate ${certificateId}`,
     })
   }
 
-  const handleDownloadCertificate = (certificateId: string) => {
+  const handleDownloadCertificate = (certificateId: number) => {
     toast({
       title: "Download Certificate",
       description: `Downloading certificate ${certificateId}`,
@@ -97,13 +101,13 @@ export default function StudentCertificates() {
   return (
     <AuthGuard allowedRoles={["student"]}>
       <DashboardLayout>
-        <div className="space-y-6 p-4 sm:p-6">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Internship Certificates</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Internship Certificates</h1>
               <p className="text-gray-600">Upload and manage your internship completion certificates</p>
             </div>
-            <Button onClick={() => setShowUploadForm(!showUploadForm)} className="w-full sm:w-auto">
+            <Button onClick={() => setShowUploadForm(!showUploadForm)}>
               <Plus className="mr-2 h-4 w-4" />
               Upload Certificate
             </Button>
@@ -154,8 +158,8 @@ export default function StudentCertificates() {
                       rows={3}
                     />
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? (
                         "Uploading..."
                       ) : (
@@ -165,12 +169,7 @@ export default function StudentCertificates() {
                         </>
                       )}
                     </Button>
-                    <Button
-                      variant="outline"
-                      type="button"
-                      onClick={() => setShowUploadForm(false)}
-                      className="w-full sm:w-auto"
-                    >
+                    <Button variant="outline" type="button" onClick={() => setShowUploadForm(false)}>
                       Cancel
                     </Button>
                   </div>
@@ -182,11 +181,11 @@ export default function StudentCertificates() {
           <div className="space-y-4">
             {certificates.map((certificate) => (
               <Card key={certificate.id}>
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0 mb-2">
-                        <h3 className="text-lg font-semibold">{certificate.certificateType}</h3>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold">{certificate.internshipTitle}</h3>
                         <Badge
                           variant={
                             certificate.status === "approved"
@@ -195,7 +194,7 @@ export default function StudentCertificates() {
                                 ? "secondary"
                                 : "destructive"
                           }
-                          className="flex items-center gap-1 w-fit"
+                          className="flex items-center gap-1"
                         >
                           {certificate.status === "approved" && <CheckCircle className="h-3 w-3" />}
                           {certificate.status === "pending" && <Clock className="h-3 w-3" />}
@@ -203,40 +202,34 @@ export default function StudentCertificates() {
                           {certificate.status.charAt(0).toUpperCase() + certificate.status.slice(1)}
                         </Badge>
                       </div>
-                      <p className="text-gray-600 mb-2">{certificate.issuer}</p>
-                      <div className="flex flex-col space-y-1 sm:flex-row sm:gap-4 sm:space-y-0 text-sm text-gray-500 mb-3">
-                        <span>Issue Date: {new Date(certificate.issueDate).toLocaleDateString()}</span>
-                        <span>Uploaded: {new Date(certificate.submittedDate).toLocaleDateString()}</span>
-                        {certificate.reviewDate && (
-                          <span>Reviewed: {new Date(certificate.reviewDate).toLocaleDateString()}</span>
+                      <p className="text-gray-600 mb-2">{certificate.company}</p>
+                      <div className="flex gap-4 text-sm text-gray-500 mb-3">
+                        <span>Duration: {certificate.duration}</span>
+                        <span>
+                          Period: {new Date(certificate.startDate).toLocaleDateString()} -{" "}
+                          {new Date(certificate.endDate).toLocaleDateString()}
+                        </span>
+                        <span>Uploaded: {new Date(certificate.uploadDate).toLocaleDateString()}</span>
+                        {certificate.approvedDate && (
+                          <span>Approved: {new Date(certificate.approvedDate).toLocaleDateString()}</span>
                         )}
                       </div>
-                      {certificate.reviewedBy && (
-                        <p className="text-sm text-gray-600 mb-3">Reviewed by: {certificate.reviewedBy}</p>
+                      {certificate.approvedBy && (
+                        <p className="text-sm text-gray-600 mb-3">Approved by: {certificate.approvedBy}</p>
                       )}
-                      {certificate.comments && (
+                      {certificate.feedback && (
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-sm font-medium mb-1">Faculty Feedback:</p>
-                          <p className="text-sm text-gray-700">{certificate.comments}</p>
+                          <p className="text-sm text-gray-700">{certificate.feedback}</p>
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-row sm:flex-col gap-2 sm:ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewCertificate(certificate.id)}
-                        className="flex-1 sm:flex-none"
-                      >
+                    <div className="flex gap-2 ml-4">
+                      <Button variant="outline" size="sm" onClick={() => handleViewCertificate(certificate.id)}>
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadCertificate(certificate.id)}
-                        className="flex-1 sm:flex-none"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => handleDownloadCertificate(certificate.id)}>
                         <Download className="h-4 w-4 mr-1" />
                         Download
                       </Button>

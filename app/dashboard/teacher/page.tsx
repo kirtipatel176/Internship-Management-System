@@ -7,22 +7,26 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
+  Users,
   FileText,
   Award,
   CheckCircle,
-  AlertTriangle,
-  BookOpen,
   Calendar,
   BarChart3,
   Clock,
-  GraduationCap,
   TrendingUp,
   Star,
+  Zap,
   Target,
+  Activity,
+  Bell,
+  ArrowRight,
 } from "lucide-react"
 import Link from "next/link"
-import { getCurrentUser, getTeacherDashboardData } from "@/lib/data"
+import { getCurrentUser } from "@/lib/auth"
+import { getTeacherDashboardData } from "@/lib/data"
 import { useEffect, useState } from "react"
+
 
 export default function TeacherDashboard() {
   const [user, setUser] = useState(null)
@@ -33,8 +37,8 @@ export default function TeacherDashboard() {
     const currentUser = getCurrentUser()
     setUser(currentUser)
 
-    if (currentUser?.email) {
-      const data = getTeacherDashboardData(currentUser.email)
+    if (currentUser?.id) {
+      const data = getTeacherDashboardData(currentUser.id)
       setDashboardData(data)
     }
     setLoading(false)
@@ -43,19 +47,16 @@ export default function TeacherDashboard() {
   if (loading) {
     return (
       <AuthGuard allowedRoles={["teacher"]}>
-        <DashboardLayout>
-          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg w-64 mb-4"></div>
-              <div className="h-4 bg-slate-200 rounded w-96 mb-8"></div>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl animate-pulse"
-                ></div>
-              ))}
+        <DashboardLayout role="teacher">
+          <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 w-64 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 w-96 bg-gray-200 rounded"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+                ))}
+              </div>
             </div>
           </div>
         </DashboardLayout>
@@ -63,520 +64,362 @@ export default function TeacherDashboard() {
     )
   }
 
-  const data = dashboardData || {
-    profile: {
-      name: "Dr. Sarah Wilson",
-      department: "Computer Engineering",
-      designation: "Associate Professor",
-      employeeId: "EMP001",
+ const data = {
+  ...(dashboardData || {}),
+  stats: {
+    totalStudents: 25,
+    pendingReports: 8,
+    approvedReports: 15,
+    certificatesToReview: 3,
+    activeTasks: 5,
+    ...(dashboardData?.stats || {}),
+  },
+  recentActivities: dashboardData?.recentActivities ?? [
+    { type: "report", title: "John Doe submitted Week 8 report", time: "2024-01-15T10:30:00Z", status: "pending" },
+    {
+      type: "certificate",
+      title: "Jane Smith uploaded certificate",
+      time: "2024-01-14T14:20:00Z",
+      status: "pending",
     },
-    stats: {
-      totalStudents: 25,
-      pendingReports: 8,
-      approvedCertificates: 15,
-      completedInternships: 12,
-      upcomingMeetings: 3,
-      thisWeekTasks: 5,
+    {
+      type: "report",
+      title: "Mike Johnson submitted Week 7 report",
+      time: "2024-01-13T09:15:00Z",
+      status: "approved",
     },
-    recentActivities: [
-      { id: 1, student: "John Doe", action: "Week 8 Report submitted", date: "2024-01-15", status: "pending" },
-      {
-        id: 2,
-        student: "Jane Smith",
-        action: "Data Analysis Certificate approved",
-        date: "2024-01-14",
-        status: "approved",
-      },
-      {
-        id: 3,
-        student: "Mike Johnson",
-        action: "Internship at AI Innovations started",
-        date: "2024-01-12",
-        status: "active",
-      },
-      {
-        id: 4,
-        student: "Sarah Johnson",
-        action: "Weekly review meeting scheduled",
-        date: "2024-01-11",
-        status: "scheduled",
-      },
-      { id: 5, student: "Alex Kumar", action: "Mid-term evaluation submitted", date: "2024-01-10", status: "pending" },
-    ],
-    pendingTasks: [
-      { id: 1, task: "Review weekly reports", count: 5, priority: "high", type: "reports" },
-      { id: 2, task: "Approve certificates", count: 3, priority: "medium", type: "certificates" },
-      { id: 3, task: "Schedule meetings", count: 2, priority: "low", type: "meetings" },
-      { id: 4, task: "Grade submissions", count: 4, priority: "high", type: "grading" },
-      { id: 5, task: "Update student progress", count: 6, priority: "medium", type: "progress" },
-    ],
-    studentProgress: [
-      { id: 1, name: "John Doe", company: "TechCorp Solutions", progress: 85, status: "excellent" },
-      { id: 2, name: "Jane Smith", company: "DataTech Inc", progress: 78, status: "good" },
-      { id: 3, name: "Mike Wilson", company: "AI Innovations", progress: 92, status: "excellent" },
-      { id: 4, name: "Sarah Johnson", company: "WebDev Studios", progress: 65, status: "average" },
-    ],
-  }
+  ],
+}
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "approved":
       case "completed":
-      case "excellent":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200"
+        return "bg-green-100 text-green-800 border-green-200"
       case "pending":
       case "scheduled":
-      case "good":
-        return "bg-amber-100 text-amber-800 border-amber-200"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
       case "rejected":
-      case "average":
         return "bg-red-100 text-red-800 border-red-200"
-      case "active":
-        return "bg-blue-100 text-blue-800 border-blue-200"
       default:
-        return "bg-slate-100 text-slate-800 border-slate-200"
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "text-red-600 bg-red-50 border-red-200"
-      case "medium":
-        return "text-amber-600 bg-amber-50 border-amber-200"
-      case "low":
-        return "text-emerald-600 bg-emerald-50 border-emerald-200"
-      default:
-        return "text-slate-600 bg-slate-50 border-slate-200"
-    }
-  }
-
-  const getTaskIcon = (type: string) => {
-    switch (type) {
-      case "reports":
-        return FileText
-      case "certificates":
-        return Award
-      case "meetings":
-        return Calendar
-      case "grading":
-        return BookOpen
-      case "progress":
-        return BarChart3
-      default:
-        return AlertTriangle
-    }
+  const getGradientAvatar = (title: string, index: number) => {
+    const gradients = [
+      "bg-gradient-to-br from-blue-400 to-purple-500",
+      "bg-gradient-to-br from-emerald-400 to-teal-500",
+      "bg-gradient-to-br from-orange-400 to-pink-500",
+      "bg-gradient-to-br from-indigo-400 to-blue-500",
+      "bg-gradient-to-br from-rose-400 to-red-500",
+    ]
+    return gradients[index % gradients.length]
   }
 
   return (
     <AuthGuard allowedRoles={["teacher"]}>
-      <DashboardLayout>
-        <div className="p-4 sm:p-6 space-y-6">
-          {/* Welcome Header */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-8 text-white shadow-2xl">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
-            <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/5 blur-2xl"></div>
-
-            <div className="relative flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold mb-2">Welcome back, {data.profile.name}! 👋</h1>
-                <p className="text-blue-100 text-lg mb-4">Manage your students and review their internship progress</p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                    {data.profile.designation}
+      <DashboardLayout role="teacher">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
+          <div className="relative z-10 p-6 space-y-8">
+            {/* Header */}
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <Star className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      Welcome back, {user?.name || "Dr. Sarah Wilson"}!
+                    </h1>
+                    <p className="text-gray-600 text-lg">Manage your students and review their internship progress</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 mt-4">
+                  <Badge className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-blue-200">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Active Mentor
                   </Badge>
-                  <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                    {data.profile.department}
+                  <Badge className="bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 border-emerald-200">
+                    <Target className="h-3 w-3 mr-1" />
+                    High Performance
                   </Badge>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-blue-100 text-sm">Employee ID</p>
-                <p className="text-white font-mono text-lg">{data.profile.employeeId}</p>
+              <div className="text-right space-y-1">
+                <p className="text-sm text-gray-500 font-medium">Associate Professor</p>
+                <p className="text-sm text-gray-500">Computer Engineering</p>
+                <p className="text-xs text-gray-400">ID: EMP001</p>
+                <div className="flex items-center justify-end mt-2">
+                  <Bell className="h-4 w-4 text-blue-500 mr-1" />
+                  <span className="text-xs text-blue-600 font-medium">3 new notifications</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600"></div>
-              <CardContent className="relative p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 text-sm font-medium">Total Students</p>
-                    <p className="text-3xl font-bold">{data.stats.totalStudents}</p>
-                    <p className="text-blue-100 text-xs mt-1">Under your guidance</p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                    <GraduationCap className="h-8 w-8" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-600"></div>
-              <CardContent className="relative p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-amber-100 text-sm font-medium">Pending Reports</p>
-                    <p className="text-3xl font-bold">{data.stats.pendingReports}</p>
-                    <p className="text-amber-100 text-xs mt-1">Awaiting review</p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                    <FileText className="h-8 w-8" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-600"></div>
-              <CardContent className="relative p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-emerald-100 text-sm font-medium">Certificates</p>
-                    <p className="text-3xl font-bold">{data.stats.approvedCertificates}</p>
-                    <p className="text-emerald-100 text-xs mt-1">Approved this semester</p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                    <Award className="h-8 w-8" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-indigo-600"></div>
-              <CardContent className="relative p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-100 text-sm font-medium">Completion Rate</p>
-                    <p className="text-3xl font-bold">
-                      {Math.round((data.stats.completedInternships / data.stats.totalStudents) * 100)}%
-                    </p>
-                    <Progress
-                      value={(data.stats.completedInternships / data.stats.totalStudents) * 100}
-                      className="mt-2 h-2 bg-white/20"
-                    />
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                    <Target className="h-8 w-8" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Recent Activities */}
-            <Card className="lg:col-span-2 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-100">
-                <CardTitle className="flex items-center gap-3 text-slate-800">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                  </div>
-                  Recent Student Activities
-                </CardTitle>
-                <CardDescription className="text-slate-600">
-                  Latest submissions and updates from your students
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {data.recentActivities.map((activity) => (
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              {[
+                {
+                  title: "Total Students",
+                  value: data.stats.totalStudents,
+                  icon: Users,
+                  color: "blue",
+                  trend: "+12%",
+                  subtitle: "Under your guidance",
+                },
+                {
+                  title: "Pending Reports",
+                  value: data.stats.pendingReports,
+                  icon: FileText,
+                  color: "orange",
+                  trend: "-5%",
+                  subtitle: "Awaiting review",
+                },
+                {
+                  title: "Approved Reports",
+                  value: data.stats.approvedReports,
+                  icon: CheckCircle,
+                  color: "emerald",
+                  trend: "+18%",
+                  subtitle: "This semester",
+                },
+                {
+                  title: "Certificates to Review",
+                  value: data.stats.certificatesToReview,
+                  icon: Award,
+                  color: "purple",
+                  trend: "+8%",
+                  subtitle: "Pending approval",
+                },
+                {
+                  title: "Active Tasks",
+                  value: data.stats.activeTasks,
+                  icon: CheckCircle,
+                  color: "indigo",
+                  trend: "+3%",
+                  subtitle: "Assigned to students",
+                },
+              ].map((stat, index) => (
+                <Card
+                  key={index}
+                  className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500"
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
                     <div
-                      key={activity.id}
-                      className="flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-slate-50 to-blue-50/50 hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 border border-slate-100 hover:border-blue-200"
+                      className={`w-10 h-10 rounded-xl bg-gradient-to-br from-${stat.color}-100 to-${stat.color}-200 flex items-center justify-center`}
                     >
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
-                          <span className="text-sm font-bold text-white">
-                            {activity.student
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900">{activity.student}</p>
-                        <p className="text-sm text-slate-600 truncate">{activity.action}</p>
-                        <p className="text-xs text-slate-500 mt-1">{new Date(activity.date).toLocaleDateString()}</p>
-                      </div>
-                      <Badge className={`${getStatusColor(activity.status)} border font-medium`}>
-                        {activity.status}
-                      </Badge>
+                      <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
                     </div>
-                  ))}
-                </div>
-                <div className="mt-6 pt-4 border-t border-slate-100">
-                  <Link href="/dashboard/teacher/students">
-                    <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                      View All Students
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-3xl font-bold text-${stat.color}-600 mb-2`}>{stat.value}</div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500">{stat.subtitle}</p>
+                      <div className="flex items-center">
+                        <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
+                        <span className="text-xs text-emerald-600 font-medium">{stat.trend}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-            {/* Pending Tasks */}
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-100">
-                <CardTitle className="flex items-center gap-3 text-slate-800">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <AlertTriangle className="h-5 w-5 text-orange-600" />
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Recent Activities */}
+              <Card className="lg:col-span-2 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardHeader className="border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center">
+                        <Activity className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-900">Recent Activities</CardTitle>
+                        <CardDescription className="text-gray-600">
+                          Latest submissions and updates from your students
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">Live Updates</Badge>
                   </div>
-                  Pending Tasks
-                </CardTitle>
-                <CardDescription className="text-slate-600">Items requiring your attention</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {data.pendingTasks.slice(0, 4).map((task) => {
-                    const TaskIcon = getTaskIcon(task.type)
-                    return (
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {data.recentActivities.map((activity, index) => (
                       <div
-                        key={task.id}
-                        className="flex items-center space-x-3 p-3 rounded-xl bg-gradient-to-r from-slate-50 to-orange-50/50 hover:from-orange-50 hover:to-red-50 transition-all duration-200 border border-slate-100 hover:border-orange-200"
+                        key={`activity-${index}`}
+                        className="flex items-center space-x-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-purple-50 transition-all duration-300"
                       >
-                        <div className={`p-2 rounded-lg ${getPriorityColor(task.priority)}`}>
-                          <TaskIcon className="h-4 w-4" />
+                        <div className="flex-shrink-0">
+                          <div
+                            className={`w-12 h-12 ${getGradientAvatar(activity.title, index)} rounded-full flex items-center justify-center shadow-lg`}
+                          >
+                            {activity.type === "report" ? (
+                              <FileText className="h-5 w-5 text-white" />
+                            ) : (
+                              <Award className="h-5 w-5 text-white" />
+                            )}
+                          </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 truncate">{task.task}</p>
-                          <p className="text-xs text-slate-500">{task.count} items</p>
+                          <p className="text-sm font-semibold text-gray-900">{activity.title}</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(activity.time).toLocaleDateString()} •{" "}
+                            {new Date(activity.time).toLocaleTimeString()}
+                          </p>
                         </div>
-                        <Badge className={`${getPriorityColor(task.priority)} border text-xs font-medium`}>
-                          {task.priority}
+                        <Badge className={`${getStatusColor(activity.status)} px-3 py-1 text-xs font-medium`}>
+                          {activity.status}
                         </Badge>
                       </div>
-                    )
-                  })}
-                </div>
-                <div className="mt-6 pt-4 border-t border-slate-100">
-                  <Link href="/dashboard/teacher/tasks">
-                    <Button
-                      variant="outline"
-                      className="w-full border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 bg-transparent"
-                    >
-                      View All Tasks
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    ))}
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-gray-100">
+                    <Link href="/dashboard/teacher/students">
+                      <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">
+                        <Users className="h-4 w-4 mr-2" />
+                        View All Students
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Student Progress Overview */}
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-100">
-              <CardTitle className="flex items-center gap-3 text-slate-800">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-emerald-600" />
-                </div>
-                Student Progress Overview
-              </CardTitle>
-              <CardDescription className="text-slate-600">Track your students' internship performance</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {data.studentProgress.map((student) => (
-                  <div
-                    key={student.id}
-                    className="p-5 rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200 hover:border-emerald-200 hover:shadow-lg transition-all duration-300"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-semibold text-slate-900 text-lg">{student.name}</h3>
-                        <p className="text-sm text-slate-600">{student.company}</p>
-                      </div>
-                      <Badge className={`${getStatusColor(student.status)} border font-medium`}>
-                        <Star className="h-3 w-3 mr-1" />
-                        {student.status}
-                      </Badge>
+              {/* Quick Actions */}
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardHeader className="border-b border-gray-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-purple-600" />
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Progress</span>
-                        <span className="font-semibold text-slate-900">{student.progress}%</span>
-                      </div>
-                      <div className="relative">
-                        <Progress value={student.progress} className="h-3 bg-slate-100" />
-                        <div
-                          className="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 transition-all duration-500"
-                          style={{ width: `${student.progress}%` }}
-                        ></div>
-                      </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold text-gray-900">Quick Actions</CardTitle>
+                      <CardDescription className="text-gray-600">Frequently used features</CardDescription>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-100">
-                <Link href="/dashboard/teacher/students">
-                  <Button
-                    variant="outline"
-                    className="w-full border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 bg-transparent"
-                  >
-                    View Detailed Progress
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
-              <CardTitle className="text-slate-800">Quick Actions</CardTitle>
-              <CardDescription className="text-slate-600">Frequently used features and shortcuts</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Link href="/dashboard/teacher/students">
-                  <Button
-                    variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center space-y-2 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 group bg-transparent"
-                  >
-                    <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                      <GraduationCap className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <span className="text-xs font-medium text-slate-700">My Students</span>
-                  </Button>
-                </Link>
-                <Link href="/dashboard/teacher/reports">
-                  <Button
-                    variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center space-y-2 border-orange-200 hover:bg-orange-50 hover:border-orange-300 transition-all duration-200 group bg-transparent"
-                  >
-                    <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
-                      <FileText className="h-6 w-6 text-orange-600" />
-                    </div>
-                    <span className="text-xs font-medium text-slate-700">Review Reports</span>
-                  </Button>
-                </Link>
-                <Link href="/dashboard/teacher/certificates">
-                  <Button
-                    variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center space-y-2 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200 group bg-transparent"
-                  >
-                    <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                      <Award className="h-6 w-6 text-emerald-600" />
-                    </div>
-                    <span className="text-xs font-medium text-slate-700">Certificates</span>
-                  </Button>
-                </Link>
-                <Link href="/dashboard/teacher/meetings">
-                  <Button
-                    variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center space-y-2 border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 group bg-transparent"
-                  >
-                    <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                      <Calendar className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <span className="text-xs font-medium text-slate-700">Meetings</span>
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Performance Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
-                <CardTitle className="text-lg text-slate-800">This Week</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Tasks to complete</span>
-                    <span className="font-bold text-blue-600 text-lg">{data.stats.thisWeekTasks}</span>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    {[
+                      { href: "/dashboard/teacher/students", icon: Users, label: "My Students", color: "blue" },
+                      { href: "/dashboard/teacher/reports", icon: FileText, label: "Review Reports", color: "orange" },
+                      { href: "/dashboard/teacher/certificates", icon: Award, label: "Certificates", color: "emerald" },
+                      { href: "/dashboard/teacher/tasks", icon: CheckCircle, label: "Manage Tasks", color: "purple" },
+                      { href: "/dashboard/teacher/meetings", icon: Calendar, label: "Meetings", color: "indigo" },
+                      { href: "/dashboard/teacher/analytics", icon: BarChart3, label: "Analytics", color: "pink" },
+                    ].map((action, index) => (
+                      <Link key={index} href={action.href}>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start h-12 hover:bg-blue-50 hover:border-blue-200 transition-all duration-300 bg-gradient-to-br from-white to-gray-50 border-2"
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-lg bg-gradient-to-br from-${action.color}-100 to-${action.color}-200 flex items-center justify-center mr-3`}
+                          >
+                            <action.icon className={`h-4 w-4 text-${action.color}-600`} />
+                          </div>
+                          <span className="font-semibold text-gray-700">{action.label}</span>
+                          <ArrowRight className="h-4 w-4 ml-auto text-gray-400" />
+                        </Button>
+                      </Link>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Upcoming meetings</span>
-                    <span className="font-bold text-indigo-600 text-lg">{data.stats.upcomingMeetings}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Reports to review</span>
-                    <span className="font-bold text-purple-600 text-lg">{data.stats.pendingReports}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-100">
-                <CardTitle className="text-lg text-slate-800">Performance</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-slate-600">Review efficiency</span>
-                      <span className="font-bold text-emerald-600">92%</span>
+            {/* Performance Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-blue-600" />
                     </div>
-                    <div className="relative">
-                      <Progress value={92} className="h-2 bg-slate-100" />
+                    <CardTitle className="text-lg font-bold text-gray-900">This Week</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { label: "Reports to review", value: 5, color: "blue" },
+                      { label: "Certificates pending", value: 3, color: "emerald" },
+                      { label: "Tasks assigned", value: 2, color: "orange" },
+                    ].map((item, index) => (
                       <div
-                        className="absolute top-0 left-0 h-2 rounded-full bg-gradient-to-r from-emerald-400 to-green-500"
-                        style={{ width: "92%" }}
-                      ></div>
-                    </div>
+                        key={index}
+                        className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-gray-50 to-blue-50"
+                      >
+                        <span className="text-sm text-gray-600 font-medium">{item.label}</span>
+                        <span className={`font-bold text-${item.color}-600 text-lg`}>{item.value}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-slate-600">Student satisfaction</span>
-                      <span className="font-bold text-green-600">4.8/5</span>
-                    </div>
-                    <div className="relative">
-                      <Progress value={96} className="h-2 bg-slate-100" />
-                      <div
-                        className="absolute top-0 left-0 h-2 rounded-full bg-gradient-to-r from-green-400 to-emerald-500"
-                        style={{ width: "96%" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 border-b border-slate-100">
-                <CardTitle className="text-lg text-slate-800">Quick Links</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <Link href="/dashboard/teacher/analytics">
-                    <Button variant="ghost" className="w-full justify-start text-sm hover:bg-blue-50 transition-colors">
-                      <BarChart3 className="h-4 w-4 mr-3 text-blue-600" />
-                      View Analytics
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/teacher/tasks">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-sm hover:bg-emerald-50 transition-colors"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-3 text-emerald-600" />
-                      Task Management
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/teacher/meetings">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-sm hover:bg-purple-50 transition-colors"
-                    >
-                      <Calendar className="h-4 w-4 mr-3 text-purple-600" />
-                      Schedule Meeting
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <CardTitle className="text-lg font-bold text-gray-900">Performance</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600 font-medium">Review efficiency</span>
+                        <span className="font-bold text-emerald-600">94%</span>
+                      </div>
+                      <Progress value={94} className="h-3 bg-gradient-to-r from-emerald-200 to-teal-200" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600 font-medium">Student satisfaction</span>
+                        <span className="font-bold text-purple-600">4.8/5</span>
+                      </div>
+                      <Progress value={96} className="h-3 bg-gradient-to-r from-purple-200 to-indigo-200" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center">
+                      <Star className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <CardTitle className="text-lg font-bold text-gray-900">Quick Stats</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Avg. response time</span>
+                      <span className="font-semibold text-blue-600">24h</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Completion rate</span>
+                      <span className="font-semibold text-emerald-600">89%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Active students</span>
+                      <span className="font-semibold text-purple-600">22</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </DashboardLayout>

@@ -16,8 +16,38 @@ import {
   Calendar,
 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { getTeacherAnalytics, getCurrentUser } from "@/lib/data"
+import {  getCurrentUser } from "@/lib/data"
 
+
+export function getTeacherAnalytics(email: string) {
+  // Replace this mock with your real analytics logic or data source
+  return {
+    totalStudents: 25,
+    reportsReviewed: 120,
+    certificatesApproved: 30,
+    avgResponseTime: 4.2,
+    gradeDistribution: [
+      { grade: "A+", count: 8, percentage: 32 },
+      { grade: "A", count: 10, percentage: 40 },
+      { grade: "B", count: 5, percentage: 20 },
+      { grade: "C", count: 2, percentage: 8 },
+    ],
+    monthlyActivity: [
+      { month: "Jan", reviews: 10 },
+      { month: "Feb", reviews: 12 },
+      { month: "Mar", reviews: 15 },
+      { month: "Apr", reviews: 8 },
+    ],
+    studentStatus: {
+      onTrack: 18,
+      needAttention: 4,
+      completed: 3,
+    },
+    thisWeek: { reports: 7 },
+    thisMonth: { certificates: 5 },
+    efficiency: 92,
+  }
+}
 export default function TeacherAnalytics() {
   const [analytics, setAnalytics] = useState<any>(null)
   const [user, setUser] = useState(null)

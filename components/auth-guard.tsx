@@ -4,7 +4,8 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { getCurrentUser } from "@/lib/data"
+import { getCurrentUser } from "@/lib/auth"
+import { Loader2 } from "lucide-react"
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -17,28 +18,32 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   const router = useRouter()
 
   useEffect(() => {
-    const user = getCurrentUser()
+    const checkAuth = () => {
+      const user = getCurrentUser()
 
-    if (!user) {
-      router.push("/auth")
-      return
+      if (!user) {
+        router.push("/auth")
+        return
+      }
+
+      if (allowedRoles && !allowedRoles.includes(user.role)) {
+        router.push(`/dashboard/${user.role}`)
+        return
+      }
+
+      setIsAuthorized(true)
+      setIsLoading(false)
     }
 
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-      router.push(`/dashboard/${user.role}`)
-      return
-    }
-
-    setIsAuthorized(true)
-    setIsLoading(false)
-  }, [router, allowedRoles])
+    checkAuth()
+  }, [allowedRoles, router])
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="text-slate-600 font-medium">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     )
