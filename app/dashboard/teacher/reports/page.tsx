@@ -7,70 +7,124 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileText, Download, MessageSquare, CheckCircle, XCircle, Clock, User } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { getReportsForTeacher, approveReport, rejectReport, requestRevision, getCurrentUser } from "@/lib/data"
 
 export default function TeacherReports() {
   const [selectedReport, setSelectedReport] = useState<number | null>(null)
   const [feedback, setFeedback] = useState("")
   const [grade, setGrade] = useState("")
+  const [reports, setReports] = useState([])
+  const [user, setUser] = useState(null)
 
-  const reports = [
-    {
-      id: 1,
-      studentName: "John Doe",
-      studentEmail: "john.doe@charusat.edu.in",
-      week: 9,
-      title: "API Development and Testing",
-      submittedDate: "2024-03-25",
-      status: "pending",
-      description:
-        "Completed REST API development for user management system. Implemented authentication and authorization features.",
-      achievements: ["Built user authentication system", "Created API documentation", "Implemented unit tests"],
-      fileName: "week9_report_john.pdf",
-    },
-    {
-      id: 2,
-      studentName: "Sarah Wilson",
-      studentEmail: "sarah.wilson@charusat.edu.in",
-      week: 12,
-      title: "Final Project Completion",
-      submittedDate: "2024-03-24",
-      status: "approved",
-      description: "Successfully completed the data analytics dashboard project with all required features.",
-      achievements: ["Deployed production dashboard", "Optimized query performance", "Created user training materials"],
-      fileName: "week12_report_sarah.pdf",
-      feedback: "Excellent work on the final project. Great attention to detail and documentation.",
-      grade: "A",
-      reviewedDate: "2024-03-25",
-    },
-    {
-      id: 3,
-      studentName: "Mike Johnson",
-      studentEmail: "mike.johnson@charusat.edu.in",
-      week: 8,
-      title: "UI Component Development",
-      submittedDate: "2024-03-20",
-      status: "revision_required",
-      description: "Developed reusable UI components for the design system.",
-      achievements: ["Created 15 new components", "Updated style guide", "Conducted usability testing"],
-      fileName: "week8_report_mike.pdf",
-      feedback: "Good progress, but please provide more details about the usability testing results and user feedback.",
-      grade: "B+",
-      reviewedDate: "2024-03-22",
-    },
-  ]
+  useEffect(() => {
+    const currentUser = getCurrentUser()
+    setUser(currentUser)
 
-  const handleReview = (reportId: number, action: "approve" | "reject" | "revision") => {
-    // Handle review action
-    console.log(`${action} report ${reportId}`)
+    if (currentUser?.id) {
+      const reportsData = getReportsForTeacher(currentUser.id)
+      setReports(reportsData)
+    }
+  }, [])
+
+  const handleApprove = async (reportId: number) => {
+    if (user?.id) {
+      await approveReport(reportId, user.id, feedback, grade)
+      setReports(
+        reports.map((report) => (report.id === reportId ? { ...report, status: "approved", feedback, grade } : report)),
+      )
+      setSelectedReport(null)
+      setFeedback("")
+      setGrade("")
+    }
   }
+
+  const handleReject = async (reportId: number) => {
+    if (user?.id) {
+      await rejectReport(reportId, user.id, feedback)
+      setReports(
+        reports.map((report) => (report.id === reportId ? { ...report, status: "rejected", feedback } : report)),
+      )
+      setSelectedReport(null)
+      setFeedback("")
+      setGrade("")
+    }
+  }
+
+  const handleRevision = async (reportId: number) => {
+    if (user?.id) {
+      await requestRevision(reportId, user.id, feedback)
+      setReports(
+        reports.map((report) =>
+          report.id === reportId ? { ...report, status: "revision_required", feedback } : report,
+        ),
+      )
+      setSelectedReport(null)
+      setFeedback("")
+      setGrade("")
+    }
+  }
+
+  const handleDownloadCSV = () => {
+    const csvContent = `Report ID,Student Name,Week,Title,Status,Grade,Submitted Date,Reviewed Date
+${reports
+  .map(
+    (report) =>
+      `${report.id},${report.studentName},${report.week},${report.title},${report.status},${report.grade || "N/A"},${report.submittedDate},${report.reviewedDate || "N/A"}`,
+  )
+  .join("\n")}`
+
+    const blob = new Blob([csvContent], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "student_reports.csv"
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const handleDownloadReport = (report: any) => {
+    const csvContent = `Student Name,${report.studentName}
+Week,${report.week}
+Title,${report.title}
+Description,${report.description}
+Achievements,"${report.achievements.join("; ")}"
+Submitted Date,${report.submittedDate}
+Status,${report.status}
+Grade,${report.grade || "N/A"}
+Feedback,${report.feedback || "N/A"}`
+
+    const blob = new Blob([csvContent], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${report.studentName.replace(/\s+/g, "_")}_week_${report.week}_report.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const pendingReviewsCount = reports.filter((report) => report.status === "pending").length
+  const approvedReviewsCount = reports.filter((report) => report.status === "approved").length
+  const revisionReviewsCount = reports.filter((report) => report.status === "revision_required").length
+  const thisWeekReviewsCount = reports.filter((report) => {
+    const submittedDate = new Date(report.submittedDate)
+    const now = new Date()
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+    return submittedDate >= startOfWeek
+  }).length
 
   return (
     <DashboardLayout role="teacher">
       <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Report Reviews</h1>
-          <p className="text-gray-600">Review and provide feedback on student weekly reports</p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Report Reviews</h1>
+            <p className="text-gray-600">Review and provide feedback on student weekly reports</p>
+          </div>
+          <Button onClick={handleDownloadCSV} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Download All Reports CSV
+          </Button>
         </div>
 
         {/* Review Stats */}
@@ -80,7 +134,7 @@ export default function TeacherReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
-                  <p className="text-2xl font-bold text-orange-600">7</p>
+                  <p className="text-2xl font-bold text-orange-600">{pendingReviewsCount}</p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-600" />
               </div>
@@ -91,7 +145,7 @@ export default function TeacherReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-green-600">45</p>
+                  <p className="text-2xl font-bold text-green-600">{approvedReviewsCount}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
@@ -102,7 +156,7 @@ export default function TeacherReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Needs Revision</p>
-                  <p className="text-2xl font-bold text-red-600">8</p>
+                  <p className="text-2xl font-bold text-red-600">{revisionReviewsCount}</p>
                 </div>
                 <XCircle className="h-8 w-8 text-red-600" />
               </div>
@@ -113,7 +167,7 @@ export default function TeacherReports() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">This Week</p>
-                  <p className="text-2xl font-bold text-blue-600">12</p>
+                  <p className="text-2xl font-bold text-blue-600">{thisWeekReviewsCount}</p>
                 </div>
                 <FileText className="h-8 w-8 text-blue-600" />
               </div>
@@ -191,9 +245,9 @@ export default function TeacherReports() {
                   </div>
 
                   <div className="flex flex-col gap-2 ml-4">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleDownloadReport(report)}>
                       <Download className="h-4 w-4 mr-1" />
-                      Download
+                      Download CSV
                     </Button>
                     {report.status === "pending" && (
                       <Button
@@ -237,14 +291,14 @@ export default function TeacherReports() {
                         />
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={() => handleReview(report.id, "approve")}>
+                        <Button onClick={() => handleApprove(report.id)}>
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Approve
                         </Button>
-                        <Button variant="outline" onClick={() => handleReview(report.id, "revision")}>
+                        <Button variant="outline" onClick={() => handleRevision(report.id)}>
                           Request Revision
                         </Button>
-                        <Button variant="destructive" onClick={() => handleReview(report.id, "reject")}>
+                        <Button variant="destructive" onClick={() => handleReject(report.id)}>
                           <XCircle className="mr-2 h-4 w-4" />
                           Reject
                         </Button>

@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chrome, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { getAllCompanies, getAllOpportunities, getAllNOCRequests } from "@/lib/data"
+
 
 export default function TPOfficerAuth() {
   return (

@@ -1,164 +1,227 @@
 "use client"
 
+import { AuthGuard } from "@/components/auth-guard"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MapPin, Calendar, Building, ExternalLink } from "lucide-react"
-import { useState } from "react"
+import { Building, MapPin, Calendar, Clock, Search, Briefcase } from "lucide-react"
+import { useState, useEffect } from "react"
+import { getActiveOpportunities, createApplication, getCurrentUser } from "@/lib/data"
+import { useToast } from "@/hooks/use-toast"
 
 export default function StudentOpportunities() {
+  const [opportunities, setOpportunities] = useState([])
+  const [filteredOpportunities, setFilteredOpportunities] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterLocation, setFilterLocation] = useState("all")
-  const [filterDuration, setFilterDuration] = useState("all")
+  const [locationFilter, setLocationFilter] = useState("all")
+  const [durationFilter, setDurationFilter] = useState("all")
+  const { toast } = useToast()
 
-  const opportunities = [
-    {
-      id: 1,
-      title: "Software Development Intern",
-      company: "TechCorp Solutions",
-      location: "Bangalore",
-      duration: "6 months",
-      type: "Full-time",
-      description: "Work on cutting-edge web applications using React and Node.js",
-      requirements: ["React.js", "Node.js", "JavaScript", "Git"],
-      postedDate: "2024-03-20",
-      deadline: "2024-04-15",
-      verified: true,
-    },
-    {
-      id: 2,
-      title: "Data Science Intern",
-      company: "DataTech Analytics",
-      location: "Mumbai",
-      duration: "4 months",
-      type: "Full-time",
-      description: "Analyze large datasets and build predictive models",
-      requirements: ["Python", "Machine Learning", "SQL", "Statistics"],
-      postedDate: "2024-03-18",
-      deadline: "2024-04-10",
-      verified: true,
-    },
-    {
-      id: 3,
-      title: "UI/UX Design Intern",
-      company: "Creative Studios",
-      location: "Pune",
-      duration: "3 months",
-      type: "Part-time",
-      description: "Design user interfaces and improve user experience",
-      requirements: ["Figma", "Adobe XD", "Prototyping", "User Research"],
-      postedDate: "2024-03-15",
-      deadline: "2024-04-05",
-      verified: true,
-    },
-  ]
+  useEffect(() => {
+    const loadOpportunities = () => {
+      const allOpportunities = getActiveOpportunities()
+      setOpportunities(allOpportunities)
+      setFilteredOpportunities(allOpportunities)
+    }
+
+    loadOpportunities()
+  }, [])
+
+  useEffect(() => {
+    let filtered = opportunities
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (opp) =>
+          opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          opp.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          opp.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+
+    if (locationFilter !== "all") {
+      filtered = filtered.filter((opp) => opp.location.includes(locationFilter))
+    }
+
+    if (durationFilter !== "all") {
+      filtered = filtered.filter((opp) => opp.duration.includes(durationFilter))
+    }
+
+    setFilteredOpportunities(filtered)
+  }, [searchTerm, locationFilter, durationFilter, opportunities])
+
+  const handleApply = (opportunityId: string) => {
+    const user = getCurrentUser()
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Please log in to apply for opportunities.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      createApplication({
+        opportunityId,
+        studentId: user.id,
+        studentName: user.name,
+      })
+
+      toast({
+        title: "Application Submitted",
+        description: "Your application has been submitted successfully!",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit application. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const locations = [...new Set(opportunities.map((opp) => opp.location))]
+  const durations = [...new Set(opportunities.map((opp) => opp.duration))]
 
   return (
-    <DashboardLayout role="student">
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Internship Opportunities</h1>
-          <p className="text-gray-600">Discover and apply for verified internship positions</p>
-        </div>
-
-        {/* Search and Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search opportunities..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={filterLocation} onValueChange={setFilterLocation}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  <SelectItem value="bangalore">Bangalore</SelectItem>
-                  <SelectItem value="mumbai">Mumbai</SelectItem>
-                  <SelectItem value="pune">Pune</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterDuration} onValueChange={setFilterDuration}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Duration" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Durations</SelectItem>
-                  <SelectItem value="3">3 months</SelectItem>
-                  <SelectItem value="4">4 months</SelectItem>
-                  <SelectItem value="6">6 months</SelectItem>
-                </SelectContent>
-              </Select>
+    <AuthGuard allowedRoles={["student"]}>
+      <DashboardLayout>
+        <div className="space-y-6 p-4 sm:p-6">
+          <div className="flex flex-col space-y-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Internship Opportunities</h1>
+              <p className="text-gray-600">Discover and apply for exciting internship opportunities</p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Opportunities List */}
-        <div className="space-y-4">
-          {opportunities.map((opportunity) => (
-            <Card key={opportunity.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
+            {/* Search and Filters */}
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold">{opportunity.title}</h3>
-                      {opportunity.verified && (
-                        <Badge variant="default" className="bg-green-600">
-                          Verified
-                        </Badge>
-                      )}
-                      <Badge variant="outline">{opportunity.type}</Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-gray-600 mb-3">
-                      <div className="flex items-center gap-1">
-                        <Building className="h-4 w-4" />
-                        <span>{opportunity.company}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{opportunity.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{opportunity.duration}</span>
-                      </div>
-                    </div>
-                    <p className="text-gray-700 mb-3">{opportunity.description}</p>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {opportunity.requirements.map((req, index) => (
-                        <Badge key={index} variant="secondary">
-                          {req}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Posted: {new Date(opportunity.postedDate).toLocaleDateString()} • Deadline:{" "}
-                      {new Date(opportunity.deadline).toLocaleDateString()}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search opportunities..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 ml-4">
-                    <Button>
-                      Apply Now
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button variant="outline">View Details</Button>
+                  <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+                    <Select value={locationFilter} onValueChange={setLocationFilter}>
+                      <SelectTrigger className="w-full sm:w-40">
+                        <SelectValue placeholder="Location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {locations.map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={durationFilter} onValueChange={setDurationFilter}>
+                      <SelectTrigger className="w-full sm:w-40">
+                        <SelectValue placeholder="Duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Durations</SelectItem>
+                        {durations.map((duration) => (
+                          <SelectItem key={duration} value={duration}>
+                            {duration}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          </div>
+
+          {/* Opportunities Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {filteredOpportunities.map((opportunity) => (
+              <Card key={opportunity.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start mb-2">
+                    <CardTitle className="text-lg line-clamp-2">{opportunity.title}</CardTitle>
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      {opportunity.duration}
+                    </Badge>
+                  </div>
+                  <CardDescription className="flex items-center gap-1">
+                    <Building className="h-4 w-4" />
+                    {opportunity.companyName}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600 line-clamp-3">{opportunity.description}</p>
+
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <MapPin className="h-3 w-3" />
+                      <span>{opportunity.location}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <Calendar className="h-3 w-3" />
+                      <span>Deadline: {new Date(opportunity.applicationDeadline).toLocaleDateString()}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <Clock className="h-3 w-3" />
+                      <span>Starts: {new Date(opportunity.startDate).toLocaleDateString()}</span>
+                    </div>
+
+                    {opportunity.stipend && (
+                      <div className="text-sm font-medium text-green-600">Stipend: {opportunity.stipend}</div>
+                    )}
+
+                    <div className="flex flex-wrap gap-1">
+                      {opportunity.requirements.slice(0, 3).map((req, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {req}
+                        </Badge>
+                      ))}
+                      {opportunity.requirements.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{opportunity.requirements.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2">
+                      <span className="text-xs text-gray-500">{opportunity.applicationsCount} applications</span>
+                      <Button size="sm" onClick={() => handleApply(opportunity.id)}>
+                        Apply Now
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredOpportunities.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Briefcase className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-500 mb-2">No opportunities found</p>
+                <p className="text-sm text-gray-400">
+                  Try adjusting your search criteria or check back later for new opportunities
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
-      </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </AuthGuard>
   )
 }

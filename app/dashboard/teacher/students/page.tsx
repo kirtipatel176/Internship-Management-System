@@ -1,56 +1,67 @@
+"use client"
+
+import type React from "react"
+
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { Search, User, Mail, Phone, Eye, MessageSquare, TrendingUp } from "lucide-react"
+import { Search, User, Mail, Phone, Eye, MessageSquare, TrendingUp, Download } from "lucide-react"
+import { useEffect, useState } from "react"
+import { getTeacherStudents, getCurrentUser } from "@/lib/data"
 
 export default function TeacherStudents() {
-  const students = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@charusat.edu.in",
-      phone: "+91 9876543210",
-      company: "TechCorp Solutions",
-      position: "Software Development Intern",
-      progress: 67,
-      reportsSubmitted: 8,
-      totalReports: 12,
-      status: "on_track",
-      lastActivity: "2024-03-25",
-      mentor: "Dr. Smith",
-    },
-    {
-      id: 2,
-      name: "Sarah Wilson",
-      email: "sarah.wilson@charusat.edu.in",
-      phone: "+91 9876543211",
-      company: "DataTech Analytics",
-      position: "Data Science Intern",
-      progress: 100,
-      reportsSubmitted: 12,
-      totalReports: 12,
-      status: "completed",
-      lastActivity: "2024-03-24",
-      mentor: "Dr. Smith",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike.johnson@charusat.edu.in",
-      phone: "+91 9876543212",
-      company: "Creative Studios",
-      position: "UI/UX Design Intern",
-      progress: 45,
-      reportsSubmitted: 5,
-      totalReports: 12,
-      status: "behind",
-      lastActivity: "2024-03-20",
-      mentor: "Dr. Smith",
-    },
-  ]
+  const [students, setStudents] = useState([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    const currentUser = getCurrentUser()
+    setUser(currentUser)
+
+    if (currentUser?.email) {
+      const studentsData = getTeacherStudents(currentUser.email)
+      setStudents(studentsData)
+    }
+  }, [])
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const filteredStudents = students.filter((student) => student.name.toLowerCase().includes(searchQuery.toLowerCase()))
+
+  const totalStudents = students.length
+  const onTrackStudents = students.filter((student) => student.status === "on_track").length
+  const completedStudents = students.filter((student) => student.status === "completed").length
+
+  const handleViewDetails = (studentId: number) => {
+    alert(`View details for student ID: ${studentId}`)
+  }
+
+  const handleSendMessage = (studentId: number) => {
+    alert(`Send message to student ID: ${studentId}`)
+  }
+
+  const handleDownloadReport = (studentId: number) => {
+    const student = students.find((s) => s.id === studentId)
+    if (student) {
+      // Create CSV content
+      const csvContent = `Name,Email,Phone,Company,Position,Progress,Status,Reports Submitted,Last Activity
+${student.name},${student.email},${student.phone},${student.company},${student.position},${student.progress}%,${student.status},${student.reportsSubmitted}/${student.totalReports},${student.lastActivity}`
+
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: "text/csv" })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${student.name.replace(/\s+/g, "_")}_report.csv`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    }
+  }
 
   return (
     <DashboardLayout role="teacher">
@@ -65,7 +76,7 @@ export default function TeacherStudents() {
           <div className="lg:col-span-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input placeholder="Search students..." className="pl-10" />
+              <Input placeholder="Search students..." className="pl-10" value={searchQuery} onChange={handleSearch} />
             </div>
           </div>
           <Card>
@@ -73,7 +84,7 @@ export default function TeacherStudents() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Students</p>
-                  <p className="text-2xl font-bold">24</p>
+                  <p className="text-2xl font-bold">{totalStudents}</p>
                 </div>
                 <User className="h-8 w-8 text-blue-600" />
               </div>
@@ -84,7 +95,7 @@ export default function TeacherStudents() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">On Track</p>
-                  <p className="text-2xl font-bold text-green-600">18</p>
+                  <p className="text-2xl font-bold text-green-600">{onTrackStudents}</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-600" />
               </div>
@@ -95,7 +106,7 @@ export default function TeacherStudents() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-purple-600">6</p>
+                  <p className="text-2xl font-bold text-purple-600">{completedStudents}</p>
                 </div>
                 <Badge className="bg-purple-600">Done</Badge>
               </div>
@@ -105,7 +116,7 @@ export default function TeacherStudents() {
 
         {/* Students List */}
         <div className="space-y-4">
-          {students.map((student) => (
+          {filteredStudents.map((student) => (
             <Card key={student.id}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -168,13 +179,17 @@ export default function TeacherStudents() {
                   </div>
 
                   <div className="flex flex-col gap-2 ml-4">
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => handleViewDetails(student.id)}>
                       <Eye className="h-4 w-4 mr-1" />
                       View Details
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleSendMessage(student.id)}>
                       <MessageSquare className="h-4 w-4 mr-1" />
                       Send Message
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDownloadReport(student.id)}>
+                      <Download className="h-4 w-4 mr-1" />
+                      Download CSV
                     </Button>
                   </div>
                 </div>
