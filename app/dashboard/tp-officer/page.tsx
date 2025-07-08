@@ -23,7 +23,6 @@ import Link from "next/link"
 import { getCurrentUser, getTPOfficerDashboardData } from "@/lib/data"
 import { useEffect, useState } from "react"
 
-
 export default function TPOfficerDashboard() {
   const [user, setUser] = useState(null)
   const [dashboardData, setDashboardData] = useState(null)
@@ -58,34 +57,32 @@ export default function TPOfficerDashboard() {
     )
   }
 
- const data = {
-  ...(dashboardData || {}),
-  stats: {
-    pendingNOCs: 12,
-    approvedNOCs: 45,
-    totalCompanies: 28,
-    verifiedCompanies: 22,
-    pendingCompanies: 6,
-    totalOpportunities: 35,
-    activeOpportunities: 28,
-    ...(dashboardData?.stats || {}),
-  },
-  recentActivities: dashboardData?.recentActivities ?? [
-    { type: "noc", title: "NOC request from John Doe", time: "2024-01-15T10:30:00Z", status: "pending" },
-    {
-      type: "company",
-      title: "Company registration: TechCorp Solutions",
-      time: "2024-01-14T14:20:00Z",
-      status: "verified",
+  const data = dashboardData || {
+    stats: {
+      pendingNOCs: 12,
+      approvedNOCs: 45,
+      totalCompanies: 28,
+      verifiedCompanies: 22,
+      pendingCompanies: 6,
+      totalOpportunities: 35,
+      activeOpportunities: 28,
     },
-    {
-      type: "opportunity",
-      title: "New internship posted by Infosys",
-      time: "2024-01-12T09:15:00Z",
-      status: "active",
-    },
-  ],
-}
+    recentActivities: [
+      { type: "noc", title: "NOC request from John Doe", time: "2024-01-15T10:30:00Z", status: "pending" },
+      {
+        type: "company",
+        title: "Company registration: TechCorp Solutions",
+        time: "2024-01-14T14:20:00Z",
+        status: "verified",
+      },
+      {
+        type: "opportunity",
+        title: "New internship posted by Infosys",
+        time: "2024-01-12T09:15:00Z",
+        status: "active",
+      },
+    ],
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {

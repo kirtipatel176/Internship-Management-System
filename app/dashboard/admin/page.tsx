@@ -58,31 +58,29 @@ export default function AdminDashboard() {
     )
   }
 
- const data = {
-  ...(dashboardData || {}),
-  stats: {
-    totalUsers: 1250,
-    activeUsers: 890,
-    totalStudents: 800,
-    totalTeachers: 45,
-    totalReports: 2400,
-    totalCertificates: 650,
-    totalCompanies: 120,
-    totalOpportunities: 85,
-    ...(dashboardData?.stats || {}),
-  },
-  systemHealth: dashboardData?.systemHealth ?? [
-    { component: "Database", status: "healthy", uptime: 99.9 },
-    { component: "Authentication", status: "healthy", uptime: 100 },
-    { component: "File Storage", status: "warning", uptime: 98.5 },
-    { component: "Email Service", status: "healthy", uptime: 99.7 },
-  ],
-  recentActivities: dashboardData?.recentActivities ?? [
-    { type: "system", title: "John Doe: Login", time: "2024-01-15T10:30:00Z", status: "success" },
-    { type: "system", title: "Dr. Sarah Wilson: Report Review", time: "2024-01-15T09:45:00Z", status: "success" },
-    { type: "system", title: "TP Officer: Company Verification", time: "2024-01-15T08:30:00Z", status: "success" },
-  ],
-}
+  const data = dashboardData || {
+    stats: {
+      totalUsers: 1250,
+      activeUsers: 890,
+      totalStudents: 800,
+      totalTeachers: 45,
+      totalReports: 2400,
+      totalCertificates: 650,
+      totalCompanies: 120,
+      totalOpportunities: 85,
+    },
+    systemHealth: [
+      { component: "Database", status: "healthy", uptime: 99.9 },
+      { component: "Authentication", status: "healthy", uptime: 100 },
+      { component: "File Storage", status: "warning", uptime: 98.5 },
+      { component: "Email Service", status: "healthy", uptime: 99.7 },
+    ],
+    recentActivities: [
+      { type: "system", title: "John Doe: Login", time: "2024-01-15T10:30:00Z", status: "success" },
+      { type: "system", title: "Dr. Sarah Wilson: Report Review", time: "2024-01-15T09:45:00Z", status: "success" },
+      { type: "system", title: "TP Officer: Company Verification", time: "2024-01-15T08:30:00Z", status: "success" },
+    ],
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -26,15 +26,8 @@ import Link from "next/link"
 import { getCurrentUser, getStudentDashboardData } from "@/lib/data"
 import { useEffect, useState } from "react"
 
-type User = {
-  id: string
-  name: string
-  rollNumber?: string
-  // add other properties as needed
-}
-
 export default function StudentDashboard() {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState(null)
   const [dashboardData, setDashboardData] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -69,29 +62,28 @@ export default function StudentDashboard() {
     )
   }
 
-  const data = {
-  ...(dashboardData || {}),
-  stats: {
-    totalReports: 12,
-    approvedReports: 8,
-    pendingReports: 2,
-    totalCertificates: 3,
-    approvedCertificates: 2,
-    nocRequests: 2,
-    approvedNOCs: 1,
-    ...(dashboardData?.stats || {}),
-  },
-  recentActivities: dashboardData?.recentActivities ?? [
-    { type: "report", title: "Week 8 report submitted", time: "2024-01-15T10:30:00Z", status: "pending" },
-    {
-      type: "certificate",
-      title: "Certificate uploaded for TechCorp",
-      time: "2024-01-14T14:20:00Z",
-      status: "approved",
+  const data = dashboardData || {
+    stats: {
+      totalReports: 12,
+      approvedReports: 8,
+      pendingReports: 2,
+      totalCertificates: 3,
+      approvedCertificates: 2,
+      nocRequests: 2,
+      approvedNOCs: 1,
     },
-    { type: "noc", title: "NOC request approved", time: "2024-01-10T09:15:00Z", status: "approved" },
-  ],
-}
+    recentActivities: [
+      { type: "report", title: "Week 8 report submitted", time: "2024-01-15T10:30:00Z", status: "pending" },
+      {
+        type: "certificate",
+        title: "Certificate uploaded for TechCorp",
+        time: "2024-01-14T14:20:00Z",
+        status: "approved",
+      },
+      { type: "noc", title: "NOC request approved", time: "2024-01-10T09:15:00Z", status: "approved" },
+    ],
+  }
+
   const progressValue = data.stats.totalReports > 0 ? (data.stats.approvedReports / data.stats.totalReports) * 100 : 0
 
   const upcomingDeadlines = [
@@ -142,7 +134,7 @@ export default function StudentDashboard() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
           <div className="relative z-10 p-6 space-y-8">
             {/* Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start from-blue-500 to-purple-600 ">
               <div className="space-y-2">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">

@@ -242,8 +242,43 @@ export default function TeacherReportsPage() {
   }
 
   const handleDownloadReport = (report) => {
-    // Simulate file download
-    toast.success(`Downloading ${report.title}...`)
+    // Create a mock PDF content
+    const pdfContent = `
+Weekly Report - ${report.title}
+Student: ${report.studentName} (${report.rollNumber})
+Company: ${report.company}
+Position: ${report.position}
+Week: ${report.weekNumber}
+Submission Date: ${new Date(report.submissionDate).toLocaleDateString()}
+
+Description:
+${report.description}
+
+Achievements:
+${report.achievements}
+
+Challenges:
+${report.challenges}
+
+Next Week Plan:
+${report.nextWeekPlan}
+
+${report.supervisorFeedback ? `Supervisor Feedback: ${report.supervisorFeedback}` : ""}
+${report.teacherComments ? `Teacher Comments: ${report.teacherComments}` : ""}
+${report.rating ? `Rating: ${report.rating}/5` : ""}
+    `
+
+    const blob = new Blob([pdfContent], { type: "text/plain" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${report.studentName.replace(/\s+/g, "_")}_Week${report.weekNumber}_Report.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast.success(`Downloaded ${report.title}`)
   }
 
   const uniqueCompanies = [...new Set(reports.map((r) => r.company).filter(Boolean))]
@@ -254,13 +289,13 @@ export default function TeacherReportsPage() {
     return (
       <AuthGuard allowedRoles={["teacher"]}>
         <DashboardLayout role="teacher">
-          <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+          <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
             <div className="animate-pulse space-y-6">
               <div className="h-8 w-64 bg-gray-200 rounded mb-2"></div>
               <div className="h-4 w-96 bg-gray-200 rounded"></div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+                  <div key={i} className="h-24 md:h-32 bg-gray-200 rounded-2xl"></div>
                 ))}
               </div>
             </div>
@@ -274,26 +309,26 @@ export default function TeacherReportsPage() {
     <AuthGuard allowedRoles={["teacher"]}>
       <DashboardLayout role="teacher">
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-          <div className="p-6 space-y-8">
+          <div className="p-4 md:p-6 space-y-6 md:space-y-8">
             {/* Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
               <div className="space-y-2">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
                     <FileText className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                       Weekly Reports
                     </h1>
-                    <p className="text-gray-600 text-lg">Review and approve student weekly reports</p>
+                    <p className="text-gray-600 text-sm md:text-lg">Review and approve student weekly reports</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {[
                 {
                   title: "Total Reports",
@@ -329,15 +364,15 @@ export default function TeacherReportsPage() {
                   className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+                    <CardTitle className="text-xs md:text-sm font-medium text-gray-600">{stat.title}</CardTitle>
                     <div
-                      className={`w-10 h-10 rounded-xl bg-gradient-to-br from-${stat.color}-100 to-${stat.color}-200 flex items-center justify-center`}
+                      className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-${stat.color}-100 to-${stat.color}-200 flex items-center justify-center`}
                     >
-                      <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
+                      <stat.icon className={`h-4 w-4 md:h-5 md:w-5 text-${stat.color}-600`} />
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className={`text-3xl font-bold text-${stat.color}-600 mb-1`}>{stat.value}</div>
+                    <div className={`text-xl md:text-3xl font-bold text-${stat.color}-600 mb-1`}>{stat.value}</div>
                     <p className="text-xs text-gray-500">{stat.subtitle}</p>
                   </CardContent>
                 </Card>
@@ -347,10 +382,10 @@ export default function TeacherReportsPage() {
             {/* Filters */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex items-center space-x-3">
                     <Filter className="h-5 w-5 text-orange-600" />
-                    <CardTitle>Filters & Search</CardTitle>
+                    <CardTitle className="text-lg">Filters & Search</CardTitle>
                     {activeFiltersCount > 0 && (
                       <Badge className="bg-orange-100 text-orange-700">{activeFiltersCount} active</Badge>
                     )}
@@ -419,9 +454,9 @@ export default function TeacherReportsPage() {
             <div className="space-y-4">
               {filteredReports.length === 0 ? (
                 <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                  <CardContent className="p-12 text-center">
-                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-600 mb-2">No reports found</h3>
+                  <CardContent className="p-8 md:p-12 text-center">
+                    <FileText className="h-12 w-12 md:h-16 md:w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">No reports found</h3>
                     <p className="text-gray-500">Try adjusting your search criteria or filters</p>
                   </CardContent>
                 </Card>
@@ -431,40 +466,40 @@ export default function TeacherReportsPage() {
                     key={report.id}
                     className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
+                    <CardContent className="p-4 md:p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                              <FileText className="h-6 w-6 text-white" />
+                          <div className="flex items-center gap-3 md:gap-4 mb-4">
+                            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                              <FileText className="h-5 w-5 md:h-6 md:w-6 text-white" />
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-xl font-bold text-gray-900">{report.title}</h3>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                                <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate">{report.title}</h3>
                                 <Badge className={getStatusColor(report.status)}>
                                   {getStatusIcon(report.status)}
                                   <span className="ml-1">{report.status.replace("_", " ")}</span>
                                 </Badge>
                               </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md:gap-2 text-xs md:text-sm text-gray-600">
                                 <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4" />
-                                  <span>
+                                  <User className="h-3 w-3 md:h-4 md:w-4" />
+                                  <span className="truncate">
                                     {report.studentName} ({report.rollNumber})
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Building className="h-4 w-4" />
-                                  <span>
+                                  <Building className="h-3 w-3 md:h-4 md:w-4" />
+                                  <span className="truncate">
                                     {report.company} - {report.position}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" />
+                                  <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                                   <span>Week {report.weekNumber}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4" />
+                                  <Clock className="h-3 w-3 md:h-4 md:w-4" />
                                   <span>Submitted: {new Date(report.submissionDate).toLocaleDateString()}</span>
                                 </div>
                               </div>
@@ -472,7 +507,7 @@ export default function TeacherReportsPage() {
                           </div>
 
                           <div className="mb-4">
-                            <p className="text-gray-700 text-sm leading-relaxed">
+                            <p className="text-sm md:text-base text-gray-700 leading-relaxed line-clamp-3">
                               {report.description.length > 200
                                 ? `${report.description.substring(0, 200)}...`
                                 : report.description}
@@ -504,14 +539,21 @@ export default function TeacherReportsPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 ml-6">
-                          <Button size="sm" onClick={() => handleViewReport(report)}>
+                        <div className="flex flex-row lg:flex-col gap-2 lg:ml-6">
+                          <Button size="sm" onClick={() => handleViewReport(report)} className="flex-1 lg:flex-none">
                             <Eye className="h-4 w-4 mr-2" />
-                            Review
+                            <span className="hidden sm:inline">Review</span>
+                            <span className="sm:hidden">Review</span>
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDownloadReport(report)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadReport(report)}
+                            className="flex-1 lg:flex-none"
+                          >
                             <Download className="h-4 w-4 mr-2" />
-                            Download
+                            <span className="hidden sm:inline">Download</span>
+                            <span className="sm:hidden">Download</span>
                           </Button>
                         </div>
                       </div>
@@ -659,19 +701,20 @@ export default function TeacherReportsPage() {
                     </Card>
 
                     {/* Action Buttons */}
-                    <div className="flex justify-end space-x-3 pt-4 border-t">
-                      <Button variant="outline" onClick={() => setShowReportDialog(false)}>
+                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t">
+                      <Button variant="outline" onClick={() => setShowReportDialog(false)} className="w-full sm:w-auto">
                         Cancel
                       </Button>
                       <Button
                         variant="destructive"
                         onClick={() => handleApproveReport(selectedReport.id, "needs_revision")}
+                        className="w-full sm:w-auto"
                       >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Request Revision
                       </Button>
                       <Button
-                        className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+                        className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
                         onClick={() => handleApproveReport(selectedReport.id, "approved")}
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />

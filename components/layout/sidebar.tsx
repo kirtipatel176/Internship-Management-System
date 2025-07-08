@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import {
   Home,
@@ -13,13 +14,15 @@ import {
   BarChart3,
   Settings,
   Briefcase,
-  CheckCircle,
   BookOpen,
-  Shield,
-  Activity,
   Bell,
   Calendar,
   LogOut,
+  Target,
+  UserCog,
+  Database,
+  FileCheck,
+  GraduationCap,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -37,27 +40,27 @@ const getNavigationItems = (role: string) => {
     case "student":
       return [
         { name: "Dashboard", href: "/dashboard/student", icon: Home },
-        { name: "Opportunities", href: "/dashboard/student/opportunities", icon: Briefcase },
+        { name: "Opportunities", href: "/dashboard/student/opportunities", icon: Briefcase, badge: "5 New" },
         { name: "NOC Requests", href: "/dashboard/student/noc", icon: FileText },
-        { name: "Weekly Reports", href: "/dashboard/student/reports", icon: BookOpen },
+        { name: "Weekly Reports", href: "/dashboard/student/reports", icon: BookOpen, badge: "2 Due" },
         { name: "Certificates", href: "/dashboard/student/certificates", icon: Award },
-        { name: "Notifications", href: "/dashboard/student/notifications", icon: Bell },
+        { name: "Notifications", href: "/dashboard/student/notifications", icon: Bell, badge: "3" },
       ]
     case "teacher":
       return [
         { name: "Dashboard", href: "/dashboard/teacher", icon: Home },
         { name: "My Students", href: "/dashboard/teacher/students", icon: Users },
-        { name: "Report Reviews", href: "/dashboard/teacher/reports", icon: FileText },
-        { name: "Certificate Approvals", href: "/dashboard/teacher/certificates", icon: Award },
-        { name: "Tasks", href: "/dashboard/teacher/tasks", icon: CheckCircle },
+        { name: "Report Reviews", href: "/dashboard/teacher/reports", icon: FileText, badge: "8 Pending" },
+        { name: "Certificate Approvals", href: "/dashboard/teacher/certificates", icon: Award, badge: "3 Pending" },
+        { name: "Task Management", href: "/dashboard/teacher/tasks", icon: Target },
+        { name: "Notifications", href: "/dashboard/teacher/notifications", icon: Bell, badge: "12" },
         { name: "Analytics", href: "/dashboard/teacher/analytics", icon: BarChart3 },
         { name: "Meetings", href: "/dashboard/teacher/meetings", icon: Calendar },
-        { name: "Settings", href: "/dashboard/teacher/settings", icon: Settings },
       ]
     case "tp-officer":
       return [
         { name: "Dashboard", href: "/dashboard/tp-officer", icon: Home },
-        { name: "NOC Requests", href: "/dashboard/tp-officer/noc", icon: FileText },
+        { name: "NOC Management", href: "/dashboard/tp-officer/noc", icon: FileCheck, badge: "15 Pending" },
         { name: "Company Verification", href: "/dashboard/tp-officer/companies", icon: Building },
         { name: "Opportunities", href: "/dashboard/tp-officer/opportunities", icon: Briefcase },
         { name: "Analytics", href: "/dashboard/tp-officer/analytics", icon: BarChart3 },
@@ -65,9 +68,9 @@ const getNavigationItems = (role: string) => {
     case "admin":
       return [
         { name: "Dashboard", href: "/dashboard/admin", icon: Home },
-        { name: "User Management", href: "/dashboard/admin/users", icon: Users },
+        { name: "User Management", href: "/dashboard/admin/users", icon: UserCog },
         { name: "System Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
-        { name: "Audit Logs", href: "/dashboard/admin/logs", icon: Activity },
+        { name: "Audit Logs", href: "/dashboard/admin/logs", icon: Database },
         { name: "System Settings", href: "/dashboard/admin/settings", icon: Settings },
       ]
     default:
@@ -90,19 +93,23 @@ function SidebarContent({ user, onItemClick }: { user: any; onItemClick?: () => 
   }
 
   return (
-    <div className="flex h-full flex-col bg-white">
-      <div className="flex h-16 items-center border-b px-6">
-        <div className="flex items-center space-x-2">
+    <div className="flex h-full flex-col bg-white border-r border-gray-200">
+      {/* Logo */}
+      <div className="flex h-16 items-center border-b border-gray-200 px-6">
+        <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-            <Shield className="h-5 w-5 text-white" />
+            <GraduationCap className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            IMS
-          </span>
+          <div className="flex flex-col">
+            <span className="text-lg font-bold text-gray-900">IMS</span>
+            <span className="text-xs text-gray-500">Internship Management</span>
+          </div>
         </div>
       </div>
-      <ScrollArea className="flex-1 px-3">
-        <div className="space-y-1 py-4">
+
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-1">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -110,22 +117,36 @@ function SidebarContent({ user, onItemClick }: { user: any; onItemClick?: () => 
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start h-10 transition-all duration-200",
-                    isActive &&
-                      "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border border-blue-200/50",
+                    "w-full justify-start h-10 px-3 transition-all duration-200",
+                    isActive
+                      ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
+                      : "hover:bg-gray-50 text-gray-700 hover:text-gray-900",
                   )}
                 >
-                  <item.icon className="mr-3 h-4 w-4" />
-                  <span className="text-sm">{item.name}</span>
+                  <item.icon className={cn("mr-3 h-4 w-4", isActive && "text-blue-600")} />
+                  <span className="flex-1 text-left text-sm font-medium">{item.name}</span>
+                  {item.badge && (
+                    <Badge
+                      variant={isActive ? "default" : "secondary"}
+                      className={cn(
+                        "ml-auto text-xs",
+                        isActive ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600",
+                      )}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Button>
               </Link>
             )
           })}
-        </div>
+        </nav>
       </ScrollArea>
-      <div className="border-t p-4 space-y-3">
-        <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+
+      {/* User info and logout */}
+      <div className="border-t border-gray-200 p-4 space-y-3">
+        <div className="flex items-center space-x-3 px-2">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
             <span className="text-sm font-medium text-white">
               {user.name
                 .split(" ")
@@ -139,12 +160,12 @@ function SidebarContent({ user, onItemClick }: { user: any; onItemClick?: () => 
           </div>
         </div>
         <Button
-          variant="outline"
-          className="w-full justify-start h-10 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-transparent"
+          variant="ghost"
+          className="w-full justify-start h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
           onClick={handleLogout}
         >
-          <LogOut className="mr-3 h-4 w-4 " />
-          <span className="text-sm ">Logout</span>
+          <LogOut className="mr-3 h-4 w-4" />
+          <span className="text-sm">Sign Out</span>
         </Button>
       </div>
     </div>

@@ -157,7 +157,7 @@ importers:
         version: 3.25.74
     devDependencies:
       '@types/node':
-        specifier: ^22
+        specifier: latest
         version: 22.16.0
       '@types/react':
         specifier: ^19

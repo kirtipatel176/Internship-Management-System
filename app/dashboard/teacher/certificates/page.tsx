@@ -263,8 +263,55 @@ export default function TeacherCertificatesPage() {
   }
 
   const handleDownloadCertificate = (certificate) => {
-    // Simulate file download
-    toast.success(`Downloading ${certificate.studentName}'s certificate...`)
+    // Create a mock certificate content
+    const certificateContent = `
+INTERNSHIP COMPLETION CERTIFICATE
+
+This is to certify that
+
+${certificate.studentName}
+Roll Number: ${certificate.rollNumber}
+
+has successfully completed the internship program at
+
+${certificate.company}
+Position: ${certificate.position}
+Duration: ${certificate.duration}
+Period: ${new Date(certificate.internshipStartDate).toLocaleDateString()} to ${new Date(certificate.internshipEndDate).toLocaleDateString()}
+
+Grade Achieved: ${certificate.grade}
+
+Supervisor: ${certificate.supervisorName}
+Email: ${certificate.supervisorEmail}
+
+Description:
+${certificate.description}
+
+Skills Acquired:
+${certificate.skills}
+
+Projects Completed:
+${certificate.projects}
+
+${certificate.teacherComments ? `Teacher Comments: ${certificate.teacherComments}` : ""}
+
+Submission Date: ${new Date(certificate.submissionDate).toLocaleDateString()}
+${certificate.approvalDate ? `Approval Date: ${new Date(certificate.approvalDate).toLocaleDateString()}` : ""}
+
+Status: ${certificate.status.toUpperCase()}
+    `
+
+    const blob = new Blob([certificateContent], { type: "text/plain" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${certificate.studentName.replace(/\s+/g, "_")}_${certificate.company.replace(/\s+/g, "_")}_Certificate.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast.success(`Downloaded ${certificate.studentName}'s certificate`)
   }
 
   const uniqueCompanies = [...new Set(certificates.map((c) => c.company).filter(Boolean))]
@@ -275,13 +322,13 @@ export default function TeacherCertificatesPage() {
     return (
       <AuthGuard allowedRoles={["teacher"]}>
         <DashboardLayout role="teacher">
-          <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+          <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
             <div className="animate-pulse space-y-6">
               <div className="h-8 w-64 bg-gray-200 rounded mb-2"></div>
               <div className="h-4 w-96 bg-gray-200 rounded"></div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+                  <div key={i} className="h-24 md:h-32 bg-gray-200 rounded-2xl"></div>
                 ))}
               </div>
             </div>
@@ -295,19 +342,19 @@ export default function TeacherCertificatesPage() {
     <AuthGuard allowedRoles={["teacher"]}>
       <DashboardLayout role="teacher">
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100">
-          <div className="p-6 space-y-8">
+          <div className="p-4 md:p-6 space-y-6 md:space-y-8">
             {/* Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
               <div className="space-y-2">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
                     <Award className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                       Internship Certificates
                     </h1>
-                    <p className="text-gray-600 text-lg">
+                    <p className="text-gray-600 text-sm md:text-lg">
                       Review and approve student internship completion certificates
                     </p>
                   </div>
@@ -316,7 +363,7 @@ export default function TeacherCertificatesPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {[
                 {
                   title: "Total Certificates",
@@ -352,15 +399,15 @@ export default function TeacherCertificatesPage() {
                   className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+                    <CardTitle className="text-xs md:text-sm font-medium text-gray-600">{stat.title}</CardTitle>
                     <div
-                      className={`w-10 h-10 rounded-xl bg-gradient-to-br from-${stat.color}-100 to-${stat.color}-200 flex items-center justify-center`}
+                      className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-${stat.color}-100 to-${stat.color}-200 flex items-center justify-center`}
                     >
-                      <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
+                      <stat.icon className={`h-4 w-4 md:h-5 md:w-5 text-${stat.color}-600`} />
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className={`text-3xl font-bold text-${stat.color}-600 mb-1`}>{stat.value}</div>
+                    <div className={`text-xl md:text-3xl font-bold text-${stat.color}-600 mb-1`}>{stat.value}</div>
                     <p className="text-xs text-gray-500">{stat.subtitle}</p>
                   </CardContent>
                 </Card>
@@ -370,10 +417,10 @@ export default function TeacherCertificatesPage() {
             {/* Filters */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex items-center space-x-3">
                     <Filter className="h-5 w-5 text-purple-600" />
-                    <CardTitle>Filters & Search</CardTitle>
+                    <CardTitle className="text-lg">Filters & Search</CardTitle>
                     {activeFiltersCount > 0 && (
                       <Badge className="bg-purple-100 text-purple-700">{activeFiltersCount} active</Badge>
                     )}
@@ -442,9 +489,9 @@ export default function TeacherCertificatesPage() {
             <div className="space-y-4">
               {filteredCertificates.length === 0 ? (
                 <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                  <CardContent className="p-12 text-center">
-                    <Award className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-600 mb-2">No certificates found</h3>
+                  <CardContent className="p-8 md:p-12 text-center">
+                    <Award className="h-12 w-12 md:h-16 md:w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">No certificates found</h3>
                     <p className="text-gray-500">Try adjusting your search criteria or filters</p>
                   </CardContent>
                 </Card>
@@ -454,43 +501,45 @@ export default function TeacherCertificatesPage() {
                     key={certificate.id}
                     className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
+                    <CardContent className="p-4 md:p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
-                              <Award className="h-6 w-6 text-white" />
+                          <div className="flex items-center gap-3 md:gap-4 mb-4">
+                            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                              <Award className="h-5 w-5 md:h-6 md:w-6 text-white" />
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-xl font-bold text-gray-900">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                                <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate">
                                   {certificate.studentName} - Internship Certificate
                                 </h3>
-                                <Badge className={getStatusColor(certificate.status)}>
-                                  {getStatusIcon(certificate.status)}
-                                  <span className="ml-1">{certificate.status}</span>
-                                </Badge>
-                                <Badge className={`${getGradeColor(certificate.grade)} px-2 py-1`}>
-                                  Grade {certificate.grade}
-                                </Badge>
+                                <div className="flex flex-wrap gap-2">
+                                  <Badge className={getStatusColor(certificate.status)}>
+                                    {getStatusIcon(certificate.status)}
+                                    <span className="ml-1">{certificate.status}</span>
+                                  </Badge>
+                                  <Badge className={`${getGradeColor(certificate.grade)} px-2 py-1`}>
+                                    Grade {certificate.grade}
+                                  </Badge>
+                                </div>
                               </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md:gap-2 text-xs md:text-sm text-gray-600">
                                 <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4" />
+                                  <User className="h-3 w-3 md:h-4 md:w-4" />
                                   <span>{certificate.rollNumber}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Building className="h-4 w-4" />
-                                  <span>
+                                  <Building className="h-3 w-3 md:h-4 md:w-4" />
+                                  <span className="truncate">
                                     {certificate.company} - {certificate.position}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" />
+                                  <Calendar className="h-3 w-3 md:h-4 md:w-4" />
                                   <span>Duration: {certificate.duration}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4" />
+                                  <Clock className="h-3 w-3 md:h-4 md:w-4" />
                                   <span>Submitted: {new Date(certificate.submissionDate).toLocaleDateString()}</span>
                                 </div>
                               </div>
@@ -498,21 +547,21 @@ export default function TeacherCertificatesPage() {
                           </div>
 
                           <div className="mb-4">
-                            <p className="text-gray-700 text-sm leading-relaxed">
+                            <p className="text-sm md:text-base text-gray-700 leading-relaxed line-clamp-3">
                               {certificate.description.length > 200
                                 ? `${certificate.description.substring(0, 200)}...`
                                 : certificate.description}
                             </p>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                             <div>
-                              <h4 className="font-semibold text-gray-900 mb-1">Skills Acquired</h4>
-                              <p className="text-sm text-gray-600">{certificate.skills}</p>
+                              <h4 className="font-semibold text-gray-900 mb-1 text-sm">Skills Acquired</h4>
+                              <p className="text-xs md:text-sm text-gray-600 line-clamp-2">{certificate.skills}</p>
                             </div>
                             <div>
-                              <h4 className="font-semibold text-gray-900 mb-1">Supervisor</h4>
-                              <p className="text-sm text-gray-600">
+                              <h4 className="font-semibold text-gray-900 mb-1 text-sm">Supervisor</h4>
+                              <p className="text-xs md:text-sm text-gray-600">
                                 {certificate.supervisorName} ({certificate.supervisorEmail})
                               </p>
                             </div>
